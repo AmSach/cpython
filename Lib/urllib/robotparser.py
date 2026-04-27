@@ -183,8 +183,8 @@ class RobotFileParser:
         # the first match counts
         # TODO: The private API is used in order to preserve an empty query.
         # This is temporary until the public API starts supporting this feature.
-        parsed_url = urllib.parse._urlsplit(url, '')
-        url = urllib.parse._urlunsplit(None, None, *parsed_url[2:])
+        parsed_url = urllib.parse.urlsplit(url)
+        url = urllib.parse.urlunsplit(None, None, *parsed_url[2:])
         url = normalize_path(url)
         if not url:
             url = "/"
@@ -282,7 +282,11 @@ class Entry:
         """Preconditions:
         - our agent applies to this entry
         - filename is URL encoded"""
+        matching_rules = []
         for line in self.rulelines:
             if line.applies_to(filename):
-                return line.allowance
-        return True
+                matching_rules.append(line)
+        if not matching_rules:
+            return True
+        # Return allowance of the most specific (longest matching) rule
+        return max(matching_rules, key=lambda r: len(r.path)).allowance
